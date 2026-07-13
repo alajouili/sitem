@@ -1,0 +1,131 @@
+@import '../../assets/styles/variables.css';
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* --- Sidebar ------------------------------------------------------------ */
+.sidebar {
+  width: var(--sidebar-width);
+  flex-shrink: 0;
+  background: var(--color-ink);
+  color: var(--color-on-ink);
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-5) var(--space-4);
+}
+.sidebar-brand {
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  color: var(--color-on-ink);
+  margin-bottom: var(--space-7);
+  letter-spacing: -0.01em;
+}
+.sidebar-brand span {
+  color: var(--color-verdigris);
+}
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1;
+}
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  color: rgba(242, 238, 228, 0.7);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+.sidebar-link:hover {
+  background: rgba(242, 238, 228, 0.08);
+  color: var(--color-on-ink);
+  text-decoration: none;
+}
+.sidebar-link.is-active {
+  background: var(--color-verdigris);
+  color: var(--color-on-ink);
+}
+.sidebar-icon {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  width: 20px;
+  text-align: center;
+  opacity: 0.85;
+}
+.sidebar-footer {
+  border-top: 1px solid rgba(242, 238, 228, 0.14);
+  padding-top: var(--space-4);
+  margin-top: var(--space-4);
+}
+.sidebar-user {
+  font-size: var(--fs-xs);
+  color: rgba(242, 238, 228, 0.6);
+  margin-bottom: var(--space-2);
+}
+.sidebar-user strong {
+  display: block;
+  color: var(--color-on-ink);
+  font-size: var(--fs-sm);
+}
+
+/* --- Main content ---------------------------------------------------- */
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--color-paper-line);
+  background: var(--color-surface);
+}
+.content-area {
+  flex: 1;
+  padding: var(--space-6);
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* --- Auth layout ---------------------------------------------------------- */
+.auth-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-ink);
+  padding: var(--space-4);
+}
+.auth-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-modal);
+  padding: var(--space-7) var(--space-6);
+  width: 100%;
+  max-width: 400px;
+}
+.auth-brand {
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  text-align: center;
+  margin-bottom: var(--space-2);
+}
+.auth-brand span {
+  color: var(--color-verdigris);
+}
+.auth-subtitle {
+  text-align: center;
+  margin-bottom: var(--space-6);
+  font-size: var(--fs-sm);
+}

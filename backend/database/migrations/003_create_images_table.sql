@@ -1,0 +1,13 @@
+CREATE TABLE IF NOT EXISTS images (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    archive_id INT UNSIGNED NULL,
+    path VARCHAR(500) NOT NULL,
+    original_name VARCHAR(255) NOT NULL,
+    mime_type VARCHAR(100) NOT NULL,
+    size INT UNSIGNED NOT NULL DEFAULT 0,
+    width SMALLINT UNSIGNED NULL,
+    height SMALLINT UNSIGNED NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_images_archive_id (archive_id),
+    CONSTRAINT fk_images_archive_id FOREIGN KEY (archive_id) REFERENCES archives(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

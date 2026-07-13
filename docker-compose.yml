@@ -1,0 +1,131 @@
+services:
+
+  mariadb:
+    image: mariadb:10.4          # pinned to match your confirmed local
+                                    # version exactly (Phase 1 finding)
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${DB_DATABASE:-archive_system}
+      MARIADB_USER: ${DB_USERNAME:-archive_user}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      # Named volume, NOT a bind mount. This is Docker-managed
+      # storage that persists across container restarts/rebuilds —
+      # deleting and recreating the mariadb CONTAINER does not
+      # delete this data; only an explicit `docker compose down -v`
+      # would. This is the local-dev equivalent of a cloud-managed
+      # database's persistent disk.
+      - mariadb-data:/var/lib/mysql
+    ports:
+      # Exposed to your HOST machine too (not just other containers)
+      # so you can still connect with a GUI tool (HeidiSQL, DBeaver,
+      # TablePlus) for debugging, exactly like you do with XAMPP today.
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - backend-net
+
+  fpm:
+    build:
+      context: ./backend        # build context scoped to backend/ ONLY —
+      dockerfile: Dockerfile     # confirms what we discussed: COPY . .
+                                   # inside this Dockerfile sees backend/
+                                   # contents, never frontend/ or nginx/
+    restart: unless-stopped
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"           # fine for local; Phase 10 makes this
+                                     # environment-conditional for real
+      DB_CONNECTION: mysql          # MariaDB speaks the MySQL wire
+                                       # protocol, so the app's existing
+                                       # `mysql` driver value is correct
+                                       # and needs no code change
+      DB_HOST: mariadb                # Compose service name, resolved
+                                         # via internal DNS — NOT
+                                         # 127.0.0.1 like your local .env
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-archive_system}
+      DB_USERNAME: ${DB_USERNAME:-archive_user}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_TTL: 3600
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-*}
+    volumes:
+      # THE shared-path fix from our Nginx discussion: backend-nginx
+      # and fpm must agree on one identical path for public/. This
+      # bind mount is that agreement, enforced by Compose rather
+      # than by convention.
+      - ./backend/public:/var/www/html/public
+      # Named volume for uploads — this is what makes gap D1 (lost
+      # files on container restart) a non-issue even in plain
+      # Compose, before Kubernetes PVCs exist at all in Phase 5.
+      - backend-storage:/var/www/html/storage
+    depends_on:
+      mariadb:
+        condition: service_healthy   # fpm won't even START until
+                                         # mariadb's healthcheck passes —
+                                         # prevents the classic "app
+                                         # boots faster than its DB"
+                                         # race condition
+    networks:
+      - backend-net
+
+  backend-nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    volumes:
+      # SAME bind mount, SAME host path, SAME container path as fpm
+      # above. This is what makes fastcgi_pass + SCRIPT_FILENAME
+      # actually resolve correctly — both containers see identical
+      # content at identical paths, even though they're otherwise
+      # completely separate filesystems.
+      - ./backend/public:/var/www/html/public:ro   # :ro = read-only;
+                                                       # nginx only ever
+                                                       # needs to READ
+                                                       # these files
+    depends_on:
+      - fpm
+    networks:
+      - backend-net    # only backend-net — intentionally NOT on
+                          # frontend-net; nothing outside the backend
+                          # stack should reach this directly except
+                          # through the frontend's proxy, mirroring
+                          # how Kubernetes NetworkPolicies will later
+                          # restrict traffic (Phase 5)
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Build-time args, per the ARG/ENV pair in frontend/Dockerfile.
+        # Baked into the JS bundle at build time — confirmed safe
+        # per Phase 1's finding that no VITE_ vars are secret.
+        VITE_API_BASE_URL: /api
+        VITE_APP_NAME: "Archive System"
+    restart: unless-stopped
+    ports:
+      - "8080:80"       # THIS is the one port you actually open in
+                           # your browser: http://localhost:8080
+    depends_on:
+      - backend-nginx
+    networks:
+      - backend-net     # needs backend-net too, specifically so its
+                           # own Nginx `proxy_pass http://backend-nginx`
+                           # can resolve and reach that service name
+
+networks:
+  backend-net:
+    driver: bridge
+
+volumes:
+  mariadb-data:
+  backend-storage:

@@ -1,0 +1,289 @@
+@import '../../assets/styles/variables.css';
+
+/* --- Button --------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 10px 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  font-weight: 600;
+  font-size: var(--fs-sm);
+  transition: background var(--transition-fast), border-color var(--transition-fast), opacity var(--transition-fast);
+  white-space: nowrap;
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background: var(--color-verdigris);
+  color: var(--color-on-ink);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-verdigris-dark);
+}
+.btn-secondary {
+  background: transparent;
+  border-color: var(--color-paper-line);
+  color: var(--color-ink);
+}
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--color-ink-soft);
+}
+.btn-danger {
+  background: var(--color-rust);
+  color: #fff;
+}
+.btn-danger:hover:not(:disabled) {
+  background: var(--color-rust-dark);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--color-ink-soft);
+}
+.btn-ghost:hover:not(:disabled) {
+  color: var(--color-ink);
+  background: var(--color-paper-dim);
+}
+.btn-sm {
+  padding: 6px 12px;
+  font-size: var(--fs-xs);
+}
+
+/* --- Form fields ------------------------------------------------------ */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+}
+.field-label {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--color-ink);
+}
+.field-hint {
+  font-size: var(--fs-xs);
+  color: var(--color-ink-soft);
+}
+.field-error {
+  font-size: var(--fs-xs);
+  color: var(--color-rust-dark);
+}
+.input,
+.select,
+.textarea {
+  padding: 10px 12px;
+  border: 1px solid var(--color-paper-line);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-size: var(--fs-sm);
+  transition: border-color var(--transition-fast);
+}
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: var(--color-verdigris);
+}
+.input.has-error,
+.select.has-error,
+.textarea.has-error {
+  border-color: var(--color-rust);
+}
+.textarea {
+  resize: vertical;
+  min-height: 96px;
+}
+
+/* --- Card --------------------------------------------------------------- */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-paper-line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-5);
+}
+
+/* --- StatusBadge: the ledger "ink stamp" signature element --------------- */
+.status-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 3px 10px;
+  border: 1.5px solid currentColor;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transform: rotate(-1.5deg);
+  line-height: 1;
+}
+.status-stamp.status-draft {
+  color: var(--color-ink-soft);
+}
+.status-stamp.status-published {
+  color: var(--color-verdigris-dark);
+}
+.status-stamp.status-archived {
+  color: var(--color-brass-dark);
+}
+.status-stamp.status-pending {
+  color: var(--color-ink-soft);
+}
+.status-stamp.status-processing {
+  color: var(--color-brass-dark);
+}
+.status-stamp.status-completed {
+  color: var(--color-verdigris-dark);
+}
+.status-stamp.status-failed {
+  color: var(--color-rust);
+  transform: rotate(1.5deg);
+}
+
+/* --- Table ------------------------------------------------------------- */
+.table-wrap {
+  border: 1px solid var(--color-paper-line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--color-surface);
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.table th {
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-ink-soft);
+  background: var(--color-paper-dim);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-paper-line);
+}
+.table td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-paper-line);
+  font-size: var(--fs-sm);
+  vertical-align: middle;
+}
+.table tr:last-child td {
+  border-bottom: none;
+}
+.table tr.is-clickable {
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.table tr.is-clickable:hover {
+  background: var(--color-paper-dim);
+}
+
+/* --- Pagination ---------------------------------------------------------- */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+}
+.pagination-info {
+  font-size: var(--fs-xs);
+  color: var(--color-ink-soft);
+  font-family: var(--font-mono);
+}
+.pagination-controls {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* --- Spinner ------------------------------------------------------------- */
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid var(--color-paper-line);
+  border-top-color: var(--color-verdigris);
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- Alert --------------------------------------------------------------- */
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+  border: 1px solid transparent;
+}
+.alert-error {
+  background: #f8e9e5;
+  border-color: #e4bcb0;
+  color: var(--color-rust-dark);
+}
+.alert-success {
+  background: #e9f1ec;
+  border-color: #bcd6c8;
+  color: var(--color-verdigris-dark);
+}
+.alert-info {
+  background: #efece1;
+  border-color: var(--color-paper-line);
+  color: var(--color-ink-soft);
+}
+
+/* --- Empty state ----------------------------------------------------------- */
+.empty-state {
+  text-align: center;
+  padding: var(--space-8) var(--space-4);
+  color: var(--color-ink-soft);
+}
+.empty-state h3 {
+  color: var(--color-ink-soft);
+  margin-bottom: var(--space-2);
+}
+
+/* --- Modal ------------------------------------------------------------- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 33, 48, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  z-index: 100;
+}
+.modal {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-modal);
+  max-width: 480px;
+  width: 100%;
+  padding: var(--space-5);
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+}

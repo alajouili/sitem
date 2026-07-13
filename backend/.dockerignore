@@ -1,0 +1,27 @@
+# Never bake runtime-writable data into the image — it belongs
+# ONLY in the named volume (backend-storage) we already defined in
+# docker-compose.yml. Without this, every local upload/log file on
+# your dev machine gets copied into the image itself, bloating it
+# and, worse, potentially shipping real user data inside a
+# supposedly stateless build artifact.
+storage/uploads/*
+storage/logs/*
+!storage/uploads/.gitkeep
+!storage/logs/.gitkeep
+
+# Never ship real secrets inside the image layers — .env is
+# injected at runtime via docker-compose.yml's environment: block
+# instead (see Phase 1 finding S1).
+.env
+
+# Composer's own local cache/output — vendor/ is regenerated fresh
+# inside the builder stage; the git metadata is irrelevant to a
+# running container.
+vendor/
+.git
+.gitignore
+
+# Editor/OS noise, never relevant inside a container
+.vscode/
+.idea/
+*.log
