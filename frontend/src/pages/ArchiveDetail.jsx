@@ -7,7 +7,7 @@ import Button from '../components/common/Button';
 import Alert from '../components/common/Alert';
 import { PageLoader } from '../components/common/Spinner';
 import { ConfirmModal } from '../components/common/Modal';
-import ImageGallery from '../components/archive/ImageGallery';
+
 import MetadataDetails from '../components/archive/MetadataDetails';
 import { catalogNumber, formatDateTime } from '../utils/formatters';
 import { ARCHIVE_FIELD_LABELS } from '../utils/constants';

@@ -62,8 +62,7 @@ export default function ImportPage() {
   return (
     <div>
       <h1>Import archives</h1>
-      <p>Upload an .xlsx workbook. Each row becomes an archive; embedded images are linked to the row they're anchored to.</p>
-
+      <p>Upload an .xlsx workbook. Each row becomes an archive; embedded images are linked to the row they&apos;re anchored to.</p>
       <div className="card" style={{ maxWidth: 640, marginBottom: 24 }}>
         <FileDropzone
           file={file}

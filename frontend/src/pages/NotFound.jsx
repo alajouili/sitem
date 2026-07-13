@@ -7,7 +7,7 @@ export default function NotFound() {
         ERROR 404
       </div>
       <h1>Record not found</h1>
-      <p>The page you're looking for doesn't exist, or may have been moved.</p>
+       <p>The page you&apos;re looking for doesn&apos;t exist, or may have been moved.</p>
       <Link to="/">Return to dashboard</Link>
     </div>
   );
