@@ -1,0 +1,35 @@
+name: Security
+
+# Separate workflow from CI on purpose: security scans have a
+# different audience (you reviewing findings) and different
+# failure semantics (a scan finding something isn't the same kind
+# of "broken" as a failed build) — keeping them apart also means
+# either can be modified without touching the other.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # Also run on a schedule, independent of any push. A dependency
+  # that was safe last week can become vulnerable THIS week purely
+  # because a new CVE was published — nothing about YOUR code
+  # changed. Weekly is a reasonable cadence for a project this size.
+  schedule:
+    - cron: '0 6 * * 1'  # every Monday, 06:00 UTC
+
+jobs:
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Gitleaks needs full commit history, not just the latest
+          # snapshot, to scan past commits too — the default
+          # checkout only fetches the single most recent commit.
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
