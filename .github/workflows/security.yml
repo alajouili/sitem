@@ -33,3 +33,74 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ============================================================
+  # Checks composer.lock / package-lock.json against known-CVE
+  # databases — catches vulnerabilities in code you didn't write,
+  # inherited via a dependency (Phase 1 finding S5).
+  # ============================================================
+  dependency-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          # Only fail on CRITICAL/HIGH — a brand-new project scanning
+          # for the first time can surface dozens of LOW/MEDIUM
+          # findings in transitive dependencies that are impractical
+          # to fix immediately. Starting strict-but-reasonable avoids
+          # the common failure mode of a security gate being so noisy
+          # it gets disabled entirely out of frustration.
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+
+  # ============================================================
+  # Scans the ACTUAL BUILT IMAGE filesystem — OS packages (Alpine,
+  # per our Dockerfiles), not just your app's direct dependencies.
+  # Builds locally (push: false, load: true) rather than pulling
+  # from the registry, so this runs independently of CI's publish
+  # timing and works identically on a PR too (which never pushes).
+  # ============================================================
+  image-scan:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: backend
+            context: ./backend
+            dockerfile: ./backend/Dockerfile
+          - name: nginx
+            context: ./nginx
+            dockerfile: ./nginx/Dockerfile
+          - name: frontend
+            context: ./frontend
+            dockerfile: ./frontend/Dockerfile
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build ${{ matrix.name }} image (local only, for scanning)
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: false
+          load: true
+          tags: sitem-${{ matrix.name }}:scan
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+
+      - name: Run Trivy image scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: sitem-${{ matrix.name }}:scan
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
