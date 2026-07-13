@@ -1,0 +1,97 @@
+name: CI
+
+# WHEN this workflow runs — the trigger conditions.
+# "push" to main: catches anything that lands on the main branch.
+# "pull_request": runs the SAME checks on proposed changes BEFORE
+# they're merged — this is what turns CI into a real gatekeeper
+# rather than just an after-the-fact notification. A PR with a
+# failing build should be visibly blocked, not silently merged
+# and discovered broken later.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ============================================================
+  # JOB 1: Frontend lint — closes Phase 1 gap C3 ("eslint script
+  # exists but isn't run automatically"). This finally makes it
+  # automatic. A failing lint fails the whole workflow, which is
+  # the point: code quality gates only work if they're enforced,
+  # not optional.
+  # ============================================================
+  frontend-lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+  # ============================================================
+  # JOB 2: Build every Docker image — this is the big one. It
+  # reuses the EXACT Dockerfiles from Phase 2, unmodified, run in
+  # a clean environment with none of your local machine's state.
+  # This is precisely the kind of check that would have caught
+  # the Common.css and AppException case-mismatch bugs the moment
+  # they were introduced, rather than discovering them mid-Docker
+  # build weeks later.
+  #
+  # A "matrix" runs the same steps once per listed value — instead
+  # of writing three nearly-identical jobs (one per image), we
+  # define the differences as data and let GitHub Actions fan them
+  # out into 3 parallel jobs automatically.
+  # ============================================================
+  build-images:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: backend
+            context: ./backend
+            dockerfile: ./backend/Dockerfile
+          - name: nginx
+            context: ./nginx
+            dockerfile: ./nginx/Dockerfile
+          - name: frontend
+            context: ./frontend
+            dockerfile: ./frontend/Dockerfile
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Buildx is Docker's modern build engine — required for
+      # multi-stage build caching features and matches exactly
+      # what Docker Desktop uses locally (the "buildkit.dockerfile.v0"
+      # lines you saw throughout Phase 2's build logs).
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build ${{ matrix.name }} image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: false
+          # GitHub Actions' own cache backend — speeds up repeat
+          # runs by reusing unchanged layers, same principle as
+          # Docker's local layer cache we relied on heavily
+          # throughout Phase 2's debugging (all those "CACHED"
+          # lines in your build logs).
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
