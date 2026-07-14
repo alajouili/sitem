@@ -18,7 +18,7 @@ ENV VITE_APP_NAME=${VITE_APP_NAME}
 RUN npm run build
 
 
-FROM nginx:1.27-alpine AS runtime
+FROM nginx:1.30.3-alpine3.23e AS runtime
 
 COPY --from=builder /app/dist /usr/share/nginx/html
 
