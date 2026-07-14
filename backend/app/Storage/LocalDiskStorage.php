@@ -84,6 +84,10 @@ final class LocalDiskStorage implements StorageInterface
             return false;
         }
 
+        // nosemgrep: php.lang.security.unlink-use.unlink-use
+        // False positive: fullPath() always routes through relative(),
+        // which rejects any ".." path segment before this point.
+
         return @unlink($full);
     }
 
