@@ -104,3 +104,26 @@ jobs:
           image-ref: sitem-${{ matrix.name }}:scan
           severity: 'CRITICAL,HIGH'
           exit-code: '1'
+
+  # ============================================================
+  # SAST — reads your actual PHP/JS source for dangerous CODE
+  # PATTERNS, not known CVEs. This is the one check in this whole
+  # workflow that looks at YOUR logic, not third-party packages or
+  # OS layers. Directly targets Phase 1 findings S2 (hand-rolled
+  # JWT in AuthService.php) and S6 (XXE-prone XML parsing in
+  # ExcelHelper.php via simplexml/dom on untrusted uploaded files).
+  # ============================================================
+  sast-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep
+        uses: semgrep/semgrep-action@v1
+        with:
+          # "auto" pulls Semgrep's community-maintained default
+          # ruleset, which includes OWASP Top 10-aligned rules for
+          # both PHP and JavaScript/React — appropriate breadth for
+          # a first SAST pass without hand-picking rulesets yet.
+          config: auto
