@@ -112,30 +112,18 @@ jobs:
   # OS layers. Directly targets Phase 1 findings S2 (hand-rolled
   # JWT in AuthService.php) and S6 (XXE-prone XML parsing in
   # ExcelHelper.php via simplexml/dom on untrusted uploaded files).
-  #
-  # NOTE: this job intentionally does NOT use semgrep/semgrep-action.
-  # That action wraps an outdated, effectively unmaintained internal
-  # Semgrep CLI version that crashes on current community rulesets
-  # (confirmed: "ValueError: invalid rule severity value: MEDIUM" —
-  # the old CLI doesn't recognize a severity level the current
-  # ruleset uses). Worse, that crash didn't fail the GitHub Actions
-  # step — the job reported success while having scanned NOTHING.
-  # Running the CLI directly, inside Semgrep's own official
-  # container, avoids the broken wrapper entirely and gives us
-  # explicit, verifiable control over the exit code.
   # ============================================================
   sast-scan:
     runs-on: ubuntu-latest
-    container:
-      image: semgrep/semgrep
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Run Semgrep
-        # --error: makes semgrep exit non-zero if ANY finding is
-        # reported, which is what actually makes this a real gate
-        # instead of a silent report. --config=auto pulls the same
-        # community OWASP-aligned ruleset as before, just through a
-        # CLI version that isn't years out of date.
-        run: semgrep scan --config=auto --error
+        uses: semgrep/semgrep-action@v1
+        with:
+          # "auto" pulls Semgrep's community-maintained default
+          # ruleset, which includes OWASP Top 10-aligned rules for
+          # both PHP and JavaScript/React — appropriate breadth for
+          # a first SAST pass without hand-picking rulesets yet.
+          config: auto
