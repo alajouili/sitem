@@ -11,7 +11,7 @@ WORKDIR /app
 # This is a caching optimization: Docker caches each layer, and
 # only re-runs a layer if the files it depends on changed. If we
 # copied all app code before running composer install, ANY code
-# change (even a typo fix in a Controller) would invalidate the
+# change (even a typo fix in a Controlleit r) would invalidate the
 # composer cache layer and force a full re-resolve. By copying
 # just composer.json/composer.lock first, `composer install`
 # only re-runs when dependencies actually change.
