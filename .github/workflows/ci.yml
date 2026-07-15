@@ -66,6 +66,11 @@ jobs:
     permissions:
       contents: read
       packages: write
+      # Required for Cosign's KEYLESS signing — this is what lets
+      # GitHub issue a short-lived OIDC identity token proving
+      # "this workflow run really is alajouili/sitem," which
+      # Cosign uses instead of a stored private key.
+      id-token: write
     strategy:
       matrix:
         include:
@@ -108,14 +113,53 @@ jobs:
       #                        push); Kubernetes deployments in
       #                        Phase 5 will pin to the SHA tag
       #                        specifically, never to "latest".
+      #
+      # sbom: true / provenance: true — BuildKit generates a full
+      # Software Bill of Materials and a build-provenance
+      # attestation, attaching BOTH directly to the pushed image in
+      # the registry (not a separate file you could lose track of).
+      # Anyone can later run `docker buildx imagetools inspect
+      # <image> --format '{{ json .SBOM }}'` to see exactly what's
+      # inside, without re-scanning.
       - name: Build and push ${{ matrix.name }} image
+        id: build
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          sbom: true
+          provenance: true
           tags: |
             ghcr.io/${{ github.repository_owner }}/sitem-${{ matrix.name }}:latest
             ghcr.io/${{ github.repository_owner }}/sitem-${{ matrix.name }}:${{ github.sha }}
           cache-from: type=gha,scope=${{ matrix.name }}
           cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+
+      # Cosign, KEYLESS mode: instead of you generating and
+      # protecting a private signing key (a real operational
+      # burden — lose it and you can't sign; leak it and anyone
+      # can forge your signatures), Cosign uses GitHub Actions'
+      # own OIDC identity token as proof of "this really is
+      # alajouili/sitem's official pipeline." The signature is
+      # published to a public transparency log (Rekor) — anyone
+      # can later verify the image came from THIS exact workflow
+      # run, without you managing any secret at all.
+      - name: Install Cosign
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: sigstore/cosign-installer@398d4b0eeef1380460a10c8013a76f728fb906ac # v3
+
+      # Signing by DIGEST (not by tag) is deliberate — a tag like
+      # ":latest" can be reassigned to point at different content
+      # later (the exact mutable-reference problem Semgrep flagged
+      # earlier in this phase). The digest is the immutable,
+      # content-addressed identity of this exact image — signing
+      # it means the signature can never silently apply to
+      # different bytes than what was actually built here.
+      - name: Sign ${{ matrix.name }} image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          cosign sign --yes \
+            ghcr.io/${{ github.repository_owner }}/sitem-${{ matrix.name }}@${{ steps.build.outputs.digest }}
+        env:
+          COSIGN_EXPERIMENTAL: "1"
