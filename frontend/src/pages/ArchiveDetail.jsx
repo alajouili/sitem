@@ -114,7 +114,7 @@ export default function ArchiveDetail() {
         {archive.images?.map(img => (
           <div key={img.id} style={{ border: '1px solid #ccc', padding: '8px', borderRadius: '4px' }}>
             <img 
-              src={`http://127.0.0.1:8000/api/images/${img.id}/raw`} 
+              src={`/api/images/${img.id}/raw`} 
               alt={img.name || "Attached asset"} 
               style={{ width: '150px', height: '120px', objectFit: 'cover', display: 'block' }} 
             />
