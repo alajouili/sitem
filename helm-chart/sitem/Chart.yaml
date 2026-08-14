@@ -1,0 +1,12 @@
+apiVersion: v2
+name: sitem
+description: Archive Management System — PHP backend, React frontend, MariaDB
+type: application
+version: 0.1.0
+# appVersion is separate from the CHART's own version above —
+# chart version tracks changes to the TEMPLATES themselves,
+# appVersion tracks which version of YOUR APPLICATION this chart
+# currently deploys. They evolve independently: you might fix a
+# typo in a template (chart version bump) without releasing any
+# new application code (appVersion unchanged).
+appVersion: "1.0.0"

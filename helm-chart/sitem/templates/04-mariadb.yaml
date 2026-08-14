@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mariadb
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "sitem.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  # Recreate, not the default RollingUpdate — REQUIRED for anything
+  # backed by a ReadWriteOnce volume holding an exclusive lock.
+  # This is a hard-won fix from a real incident: two mysqld
+  # processes can never safely share one raw data directory, and
+  # RollingUpdate briefly runs old+new Pods together, which
+  # corrupts nothing but does crash-loop the new Pod trying to grab
+  # an already-held lock. Templating this means every future
+  # environment inherits the fix automatically — nobody has to
+  # remember to add it by hand again.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: mariadb
+  template:
+    metadata:
+      labels:
+        app: mariadb
+        {{- include "sitem.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: sitem-app-sa
+      containers:
+        - name: mariadb
+          image: {{ .Values.mariadb.image }}
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MARIADB_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: sitem-config
+                  key: MARIADB_DATABASE
+            - name: MARIADB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: sitem-config
+                  key: MARIADB_USER
+            - name: MARIADB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sitem-secrets
+                  key: DB_PASSWORD
+            - name: MARIADB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sitem-secrets
+                  key: DB_ROOT_PASSWORD
+          volumeMounts:
+            - name: mariadb-data
+              mountPath: /var/lib/mysql
+          resources:
+            {{- toYaml .Values.mariadb.resources | nindent 12 }}
+          readinessProbe:
+            exec:
+              command: ["healthcheck.sh", "--connect", "--innodb_initialized"]
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command: ["healthcheck.sh", "--connect"]
+            initialDelaySeconds: 30
+            periodSeconds: 20
+      volumes:
+        - name: mariadb-data
+          persistentVolumeClaim:
+            claimName: mariadb-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mariadb
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "sitem.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: mariadb
+  ports:
+    - port: 3306
+      targetPort: 3306

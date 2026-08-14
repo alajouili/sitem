@@ -1,0 +1,78 @@
+# Default values for the sitem chart. Override any of these with
+# `-f values-staging.yaml`, `-f values-prod.yaml`, or individual
+# `--set key=value` flags at install time — the templates never
+# change, only what fills them in.
+
+namespace: sitem
+
+image:
+  registry: ghcr.io/alajouili
+  # Pinning "latest" by default here is a CONSCIOUS tradeoff for
+  # local dev convenience — a real staging/prod values file should
+  # override this to a specific immutable tag (a git SHA or a
+  # semver release tag from Phase 3's release.yml), never "latest".
+  tag: latest
+  pullSecretName: ghcr-secret
+
+ingress:
+  host: sitem.local
+  className: nginx
+
+backend:
+  replicas: 1
+  fpm:
+    resources:
+      requests: { cpu: 250m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+  nginx:
+    resources:
+      requests: { cpu: 100m, memory: 64Mi }
+      limits: { cpu: 250m, memory: 128Mi }
+  storage:
+    size: 1Gi
+    storageClassName: standard
+
+frontend:
+  replicas: 1
+  resources:
+    requests: { cpu: 100m, memory: 64Mi }
+    limits: { cpu: 250m, memory: 128Mi }
+
+mariadb:
+  image: mariadb:10.4
+  resources:
+    requests: { cpu: 250m, memory: 256Mi }
+    limits: { cpu: 500m, memory: 512Mi }
+  storage:
+    size: 2Gi
+    storageClassName: standard
+
+hpa:
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilization: 70
+
+config:
+  appEnv: "local"
+  # Same honest flag as before: Phase 10 (Production Hardening) is
+  # where a REAL prod values file would override this to "false".
+  appDebug: "true"
+  dbConnection: "mysql"
+  dbPort: "3306"
+  dbDatabase: "archive_system"
+  dbUsername: "archive_user"
+  jwtTtl: "3600"
+  corsAllowedOrigins: "*"
+
+# Secrets are DELIBERATELY not defined with real values here — this
+# file is meant to be safe to commit. Real secret values are
+# supplied at install time via --set, matching the same discipline
+# we've followed since Phase 3's .env handling:
+#   helm install sitem ./sitem \
+#     --set secrets.dbPassword=... \
+#     --set secrets.dbRootPassword=... \
+#     --set secrets.jwtSecret=...
+secrets:
+  dbPassword: ""
+  dbRootPassword: ""
+  jwtSecret: ""

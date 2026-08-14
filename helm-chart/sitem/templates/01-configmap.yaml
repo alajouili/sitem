@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sitem-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "sitem.labels" . | nindent 4 }}
+data:
+  APP_ENV: {{ .Values.config.appEnv | quote }}
+  APP_DEBUG: {{ .Values.config.appDebug | quote }}
+  APP_URL: {{ printf "http://%s" .Values.ingress.host | quote }}
+  DB_CONNECTION: {{ .Values.config.dbConnection | quote }}
+  DB_HOST: "mariadb"
+  DB_PORT: {{ .Values.config.dbPort | quote }}
+  DB_DATABASE: {{ .Values.config.dbDatabase | quote }}
+  DB_USERNAME: {{ .Values.config.dbUsername | quote }}
+  JWT_TTL: {{ .Values.config.jwtTtl | quote }}
+  CORS_ALLOWED_ORIGINS: {{ .Values.config.corsAllowedOrigins | quote }}
+  MARIADB_DATABASE: {{ .Values.config.dbDatabase | quote }}
+  MARIADB_USER: {{ .Values.config.dbUsername | quote }}

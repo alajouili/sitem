@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  # {{ .Values.namespace }} pulls the value straight from
+  # values.yaml — change it there, every template using it updates
+  # automatically. No more hunting through 9 files for one hardcoded
+  # string.
+  name: {{ .Values.namespace }}
+  labels:
+    {{- include "sitem.labels" . | nindent 4 }}

@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "sitem.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.backend.replicas }}
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+        {{- include "sitem.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: sitem-app-sa
+      imagePullSecrets:
+        - name: {{ .Values.image.pullSecretName }}
+      initContainers:
+        - name: copy-public
+          image: {{ .Values.image.registry }}/sitem-backend:{{ .Values.image.tag }}
+          command: ["sh", "-c", "cp -r /var/www/html/public/. /shared/public/"]
+          volumeMounts:
+            - name: shared-public
+              mountPath: /shared/public
+      containers:
+        - name: fpm
+          image: {{ .Values.image.registry }}/sitem-backend:{{ .Values.image.tag }}
+          ports:
+            - containerPort: 9000
+          envFrom:
+            - configMapRef:
+                name: sitem-config
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sitem-secrets
+                  key: DB_PASSWORD
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: sitem-secrets
+                  key: JWT_SECRET
+          volumeMounts:
+            - name: shared-public
+              mountPath: /var/www/html/public
+            - name: backend-storage
+              mountPath: /var/www/html/storage
+          resources:
+            {{- toYaml .Values.backend.fpm.resources | nindent 12 }}
+
+        - name: backend-nginx
+          image: {{ .Values.image.registry }}/sitem-nginx:{{ .Values.image.tag }}
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: shared-public
+              mountPath: /var/www/html/public
+              readOnly: true
+          resources:
+            {{- toYaml .Values.backend.nginx.resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 80
+            initialDelaySeconds: 20
+            periodSeconds: 20
+
+      volumes:
+        - name: shared-public
+          emptyDir: {}
+        - name: backend-storage
+          persistentVolumeClaim:
+            claimName: backend-storage
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-nginx
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "sitem.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: backend
+  ports:
+    - port: 80
+      targetPort: 80
