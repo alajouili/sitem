@@ -1,0 +1,25 @@
+# Production overlay — use with: helm install/upgrade -f values-prod.yaml
+# Closes two findings from Phase 1's original security assessment:
+#   S4: APP_DEBUG must be false outside local dev (prevents leaking
+#       stack traces / internal file paths in API error responses)
+#   S3: CORS must be restricted to the real origin, not "*"
+# Everything not listed here inherits values.yaml's defaults —
+# this file only overrides what actually differs for production.
+
+config:
+  appDebug: "false"
+  # Restricted to the real scheme+host — a wildcard here would let
+  # ANY website's JavaScript make authenticated requests against
+  # this API on a user's behalf, a real cross-origin attack surface.
+  corsAllowedOrigins: "https://sitem.local"
+
+image:
+  # NEVER "latest" in production — pin to an immutable tag from
+  # Phase 3's release.yml (a real semver tag or commit SHA), so a
+  # deployment is reproducible and rollback-able to an EXACT
+  # previously-known-good build.
+  tag: "CHANGE_ME_TO_A_REAL_PINNED_TAG"
+
+ingress:
+  className: nginx
+  host: "sitem.local"  # replace with a real domain in actual production
