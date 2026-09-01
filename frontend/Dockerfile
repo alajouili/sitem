@@ -47,7 +47,7 @@ FROM nginx:1.30.3-alpine3.23 AS runtime
 # c-ares/libexpat: caught in the previous scan. curl/libcurl: NEW
 # findings (CVE-2026-5773, CVE-2026-6276) that appeared since
 # yesterday — same base image drift as nginx/Dockerfile.
-RUN apk upgrade --no-cache c-ares libexpat curl
+RUN apk upgrade --no-cache c-ares libexpat curl openssl libcrypto3 libssl3
 
 # Nothing from Stage 1 comes across except the compiled static
 # output. No Node.js binary, no npm, no node_modules/, no React
