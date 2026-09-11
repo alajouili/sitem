@@ -8,6 +8,6 @@ FROM nginx:1.30.3-alpine3.23
 # This is exactly why the Security workflow runs weekly, not just
 # on push — this fix is a real example of that mechanism working
 # as intended, not a bug in anything we built.
-RUN apk upgrade --no-cache c-ares libexpat curl openssl libcrypto3 libssl3
+RUN apk upgrade --no-cache c-ares libexpat curl openssl util-linux
 
 COPY default.conf /etc/nginx/conf.d/default.conf

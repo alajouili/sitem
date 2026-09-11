@@ -70,7 +70,7 @@ RUN apk add --no-cache \
     # when your own code never changes, which is exactly why the
     # security workflow also runs on a weekly schedule, not just
     # on push.
-    && apk upgrade --no-cache c-ares \
+    && apk upgrade --no-cache c-ares openssl \
     && apk add --no-cache --virtual .build-deps \
         $PHPIZE_DEPS \
         libzip-dev \
